@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { highlight } from 'sugar-high'
 import React from 'react'
-import { MermaidDiagram } from './mermaid'
+import remarkGfm from 'remark-gfm'
 
 function Table({ data }) {
   let headers = data.headers.map((header, index) => (
@@ -49,25 +49,6 @@ function RoundedImage(props) {
   return <Image alt={props.alt} className="rounded-lg" {...props} />
 }
 
-function Pre({ children, ...props }: React.ComponentProps<'pre'>) {
-  const codeEl = children as React.ReactElement
-  const code = codeEl?.props?.children
-  const className: string = codeEl?.props?.className || ''
-  const language = className.replace(/language-/, '')
-
-  if (language === 'mermaid') {
-    const chart = String(code).replace(/\n$/, '')
-    return <MermaidDiagram chart={chart} />
-  }
-
-  const html = highlight(String(code))
-  return (
-    <pre {...props}>
-      <code dangerouslySetInnerHTML={{ __html: html }} />
-    </pre>
-  )
-}
-
 function Code({ children, ...props }) {
   let codeHTML = highlight(children)
   return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />
@@ -77,11 +58,11 @@ function slugify(str) {
   return str
     .toString()
     .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/&/g, '-and-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
+    .trim() // Remove whitespace from both ends of a string
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/&/g, '-and-') // Replace & with 'and'
+    .replace(/[^\w\-]+/g, '') // Remove all non-word characters except for -
+    .replace(/\-\-+/g, '-') // Replace multiple - with single -
 }
 
 function createHeading(level) {
@@ -113,7 +94,6 @@ let components = {
   h4: createHeading(4),
   h5: createHeading(5),
   h6: createHeading(6),
-  pre: Pre,
   Image: RoundedImage,
   a: CustomLink,
   code: Code,
@@ -124,6 +104,7 @@ export function CustomMDX(props) {
   return (
     <MDXRemote
       {...props}
+      options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
       components={{ ...components, ...(props.components || {}) }}
     />
   )
