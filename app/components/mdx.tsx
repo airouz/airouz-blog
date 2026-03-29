@@ -4,8 +4,27 @@ import { MDXRemote } from 'next-mdx-remote/rsc'
 import { highlight } from 'sugar-high'
 import React from 'react'
 import remarkGfm from 'remark-gfm'
+import { MermaidDiagram } from './mermaid'
 
-function Table({ data }) {
+function Pre({ children, ...props }: React.ComponentProps<'pre'>) {
+  const codeEl = children as React.ReactElement
+  const code = codeEl?.props?.children
+  const className: string = codeEl?.props?.className || ''
+  const language = className.replace(/language-/, '')
+
+  if (language === 'mermaid') {
+    const chart = String(code).replace(/\n$/, '')
+    return <MermaidDiagram chart={chart} />
+  }
+
+  return (
+    <pre {...props}>
+      <code className={className}>{code}</code>
+    </pre>
+  )
+}
+
+function Table({ data }: { data: { headers: string[]; rows: string[][] } }) {
   let headers = data.headers.map((header, index) => (
     <th key={index}>{header}</th>
   ))
@@ -18,55 +37,59 @@ function Table({ data }) {
   ))
 
   return (
-    <table>
-      <thead>
-        <tr>{headers}</tr>
-      </thead>
-      <tbody>{rows}</tbody>
-    </table>
+    <div className="my-4 overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <table>
+        <thead>
+          <tr>{headers}</tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
   )
 }
 
-function CustomLink(props) {
-  let href = props.href
+function CustomLink({ href, children, ...rest }: { href?: string; children?: React.ReactNode } & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  if (!href) return <a {...rest}>{children}</a>
 
   if (href.startsWith('/')) {
     return (
-      <Link href={href} {...props}>
-        {props.children}
+      <Link href={href} {...rest}>
+        {children}
       </Link>
     )
   }
 
   if (href.startsWith('#')) {
-    return <a {...props} />
+    return <a href={href} {...rest}>{children}</a>
   }
 
-  return <a target="_blank" rel="noopener noreferrer" {...props} />
+  return <a target="_blank" rel="noopener noreferrer" href={href} {...rest}>{children}</a>
 }
 
-function RoundedImage(props) {
-  return <Image alt={props.alt} className="rounded-lg" {...props} />
+function RoundedImage({ alt, ...rest }: React.ComponentProps<typeof Image>) {
+  return <Image alt={alt || ''} className="rounded-lg" {...rest} />
 }
 
-function Code({ children, ...props }) {
-  let codeHTML = highlight(children)
+function Code({ children, ...props }: React.ComponentProps<'code'>) {
+  let codeHTML = highlight(String(children))
   return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />
 }
 
-function slugify(str) {
-  return str
-    .toString()
+function slugify(str: React.ReactNode): string {
+  const text = React.Children.toArray(str)
+    .map((child) => (typeof child === 'string' ? child : ''))
+    .join('')
+  return text
     .toLowerCase()
-    .trim() // Remove whitespace from both ends of a string
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word characters except for -
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/&/g, '-and-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-+/g, '-')
 }
 
-function createHeading(level) {
-  const Heading = ({ children }) => {
+function createHeading(level: number) {
+  const Heading = ({ children }: { children: React.ReactNode }) => {
     let slug = slugify(children)
     return React.createElement(
       `h${level}`,
@@ -97,10 +120,10 @@ let components = {
   Image: RoundedImage,
   a: CustomLink,
   code: Code,
-  Table,
+  pre: Pre,
 }
 
-export function CustomMDX(props) {
+export function CustomMDX(props: { source: string; components?: Record<string, React.ComponentType> }) {
   return (
     <MDXRemote
       {...props}
