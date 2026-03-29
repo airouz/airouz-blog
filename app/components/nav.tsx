@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Navbar() {
   return (
@@ -11,9 +12,16 @@ export function Navbar() {
           <div className="flex flex-row space-x-0 pr-10">
             <Link
               href="/"
-              className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex align-middle relative py-1 px-2 m-1"
+              className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center gap-2 relative py-1 px-2 m-1"
             >
-              airouz
+              <Image
+                src="/dog-logo.png"
+                alt="airouz"
+                width={24}
+                height={24}
+                className="rounded-sm"
+              />
+              <span className="font-medium">airouz</span>
             </Link>
           </div>
         </nav>
