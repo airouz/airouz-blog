@@ -7,12 +7,6 @@ export default function Page() {
   return (
     <section>
       <div className="my-8">
-        <div className="mb-12">
-          <h1 className="font-semibold text-3xl tracking-tighter mb-3">airouz</h1>
-          <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-            AI 에이전트와 인프라를 다루는 기술 블로그.
-          </p>
-        </div>
         <div className="space-y-8">
           {allBlogs
             .sort((a, b) => {
